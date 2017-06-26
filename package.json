@@ -1,0 +1,31 @@
+{
+  "name": "stream-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:client": "npm run build:watch",
+    "start:server": "ts-node src/Server.ts",
+    "build:watch": "webpack --colors --progress --watch",
+    "http": "http-server ./dist -p 1337"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "http": "0.0.0",
+    "socket.io": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.2",
+    "@types/socket.io": "^1.4.29",
+    "browser-stream": "^0.1.10",
+    "concurrently": "^3.5.0",
+    "extract-text-webpack-plugin": "^2.1.2",
+    "html-webpack-plugin": "^2.29.0",
+    "render-media": "^2.10.0",
+    "socket.io-client": "^2.0.3",
+    "ts-loader": "^2.2.0",
+    "typescript": "^2.3.4",
+    "webpack": "^3.0.0"
+  }
+}
