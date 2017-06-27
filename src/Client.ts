@@ -1,22 +1,30 @@
 import * as browserStream from 'browser-stream';
 import * as io from 'socket.io-client';
 import * as render from 'render-media';
+import {Constants} from './Constants';
 
-const bs = browserStream(io('http://localhost:3000'));
 
+const socket = io(`http://${Constants.host}:${Constants.port}`);
+const bs = browserStream(socket);
+
+// function buf2hex(buffer) {
+//     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+// }
 
 const file = {
-    name: 'cat.mp4',
-    createReadStream: () => {
-        return bs.createReadStream('some-namespace');
-    }
+    name: 'spaceCat.mp4',
+    createReadStream: (opts) => bs.createReadStream(
+        Constants.namespace,
+        opts
+    )
 };
 
-render.append(file, 'body', (err, elem) => {
+render.append(file, 'body', (err) => {
     if (err) {
         return console.error(err.message);
     }
-
-    console.log(elem); // this is the newly created element with the media in it
 });
+
+
+
 

@@ -1,30 +1,29 @@
 import * as io from 'socket.io';
 import * as fs from 'fs';
 import * as bs from 'browser-stream';
-import {read} from 'fs';
+import {Constants} from './Constants';
 
-const path = '/home/masterwok/Downloads/Batman and Robin (1997) [1080p]/Batman.and.Robin.1997.1080p.BluRay.x264.YIFY.mp4';
+// const path = '/mnt/global/Pictures/Desktop Backgrounds/spaceCat.jpg';
+const path = '/mnt/global/Movies/Hackers (1995)/Hackers.1995.720p.BrRip.x264.YIFY.mp4';
 const socket = io();
 
 
 socket.on('connection', (socket) => {
 
     const browserStream = bs(socket);
-    const readStream = fs.createReadStream(path);
+
+    console.log('Client connected.');
 
     browserStream.on('connection', (stream, opts) => {
-        if (stream.name == 'some-namespace') {
-            console.log('Received correct namespace');
-            readStream.pipe(stream);
+        if (stream.name == Constants.namespace) {
+            fs.createReadStream(path, opts)
+                .pipe(stream);
         }
 
         stream.on('error', function (err) {
             console.error(err);
         });
     });
-
-
-    console.log('client connected!');
 });
 
-socket.listen(3000);
+socket.listen(Constants.port);
