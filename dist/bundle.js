@@ -7324,7 +7324,7 @@ function done(stream, er, data) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var Constants_1 = __webpack_require__(25);
 var websocketStream = __webpack_require__(26);
-var stream = websocketStream("ws://localhost:" + Constants_1.Constants.port);
+var stream = websocketStream(Constants_1.Constants.connectionString);
 stream.on('data', function (data) {
     console.log(buf2hex(data));
 });
@@ -7353,9 +7353,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Constants = (function () {
     function Constants() {
     }
-    Constants.namespace = 'some-namespace';
     Constants.host = 'localhost';
     Constants.port = 3000;
+    Constants.connectionString = "ws://" + Constants.host + ":" + Constants.port;
     return Constants;
 }());
 exports.Constants = Constants;

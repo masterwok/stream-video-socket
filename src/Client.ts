@@ -4,13 +4,13 @@ import * as render from 'render-media';
 import * as websocketStream from 'websocket-stream';
 import {Duplex} from 'stream';
 
-const stream: Duplex = websocketStream(`ws://localhost:${Constants.port}`);
+const stream: Duplex = websocketStream(Constants.connectionString);
 
-stream.on('data', data => {
+stream.on('data', (data: any) => {
     console.log(buf2hex(data));
 });
 
-function buf2hex(buffer) {
+function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
 }
 
