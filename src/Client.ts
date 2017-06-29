@@ -1,30 +1,26 @@
-import * as browserStream from 'browser-stream';
-import * as io from 'socket.io-client';
-import * as render from 'render-media';
 import {Constants} from './Constants';
+import * as render from 'render-media';
 
+import * as websocketStream from 'websocket-stream';
+import {Duplex} from 'stream';
 
-const socket = io(`http://${Constants.host}:${Constants.port}`);
-const bs = browserStream(socket);
+const stream: Duplex = websocketStream(`ws://localhost:${Constants.port}`);
 
-// function buf2hex(buffer) {
-//     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
-// }
-
-const file = {
-    name: 'spaceCat.mp4',
-    createReadStream: (opts) => bs.createReadStream(
-        Constants.namespace,
-        opts
-    )
-};
-
-render.append(file, 'body', (err) => {
-    if (err) {
-        return console.error(err.message);
-    }
+stream.on('data', data => {
+    console.log(buf2hex(data));
 });
 
+function buf2hex(buffer) {
+    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+}
 
-
-
+// const file = {
+//     name: 'cat.mp4',
+//     createReadStream: function (opts) {
+//         return stream;
+//     }
+// };
+//
+// render.append(file, 'body', function (err, elem) {
+//     if (err) return console.error(err.message);
+// });
