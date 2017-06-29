@@ -7356,6 +7356,7 @@ var Constants = (function () {
     Constants.host = 'localhost';
     Constants.port = 3000;
     Constants.connectionString = "ws://" + Constants.host + ":" + Constants.port;
+    Constants.filePath = '/home/masterwok/Downloads/small.mp4';
     return Constants;
 }());
 exports.Constants = Constants;
