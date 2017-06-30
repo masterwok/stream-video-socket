@@ -11,18 +11,18 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@types/websocket": "0.0.34",
-    "websocket-stream": "^5.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^8.0.2",
+    "@types/websocket": "0.0.34",
     "concurrently": "^3.5.0",
     "extract-text-webpack-plugin": "^2.1.2",
     "html-webpack-plugin": "^2.29.0",
     "render-media": "^2.10.0",
     "ts-loader": "^2.2.0",
     "typescript": "^2.3.4",
-    "webpack": "^3.0.0"
+    "webpack": "^3.0.0",
+    "websocket-stream": "^5.0.0",
+    "ws": "^3.0.0"
   }
 }
