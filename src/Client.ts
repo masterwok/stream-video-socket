@@ -25,7 +25,7 @@ const file = {
             }
 
             if (reqStart >= reqEnd) {
-                return cb(null, null)
+                return cb(null, null);
             }
 
             const ns = stream.pipe(rangeStream(reqStart,  reqEnd - 1));
