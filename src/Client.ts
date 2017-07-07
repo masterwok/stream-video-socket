@@ -8,7 +8,7 @@ import * as MultiStream from 'multistream';
 
 const file = {
     name: Constants.filePath,
-    createReadStream: function (opts: any) {
+    createReadStream: function (opts: { start: number, end: number }) {
         opts = opts || {};
 
         let start = opts.start || 0;
@@ -38,7 +38,7 @@ const file = {
 };
 
 
-render.append(file, 'body', (err) => {
+render.append(file, 'body', (err: { message: string }) => {
     if (err) {
         return console.error(err.message);
     }
