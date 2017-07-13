@@ -18684,24 +18684,32 @@ var websocketStream = __webpack_require__(63);
 var render = __webpack_require__(83);
 var rangeStream = __webpack_require__(121);
 var MultiStream = __webpack_require__(140);
+var stream = websocketStream(Constants_1.Constants.connectionString);
 var file = {
     name: Constants_1.Constants.filePath,
     createReadStream: function (opts) {
         opts = opts || {};
         var start = opts.start || 0;
+        var previousReqEnd = 0;
         return new MultiStream(function (cb) {
-            var stream = websocketStream(Constants_1.Constants.connectionString);
             var reqStart = start;
-            var end = opts.end ? (opts.end + 1) : -1;
+            var end = opts.end ? (opts.end + 1) : Constants_1.Constants.fileSize;
             var reqEnd = start + Constants_1.Constants.requestSize;
             if (end >= 0 && reqEnd > end) {
                 reqEnd = end;
             }
             if (reqStart >= reqEnd) {
+                console.log('ending stream');
                 return cb(null, null);
             }
-            var ns = stream.pipe(rangeStream(reqStart, reqEnd - 1));
+            console.log("reqStart: " + reqStart + ", reqEnd: " + reqEnd + ", previousReqEnd: " + previousReqEnd);
+            if (reqStart < previousReqEnd) {
+                console.log("Stream needs to rewind to " + reqStart);
+            }
+            var rs = rangeStream(reqStart, reqEnd - 1);
+            var ns = stream.pipe(rs);
             start = reqEnd;
+            previousReqEnd = reqEnd;
             cb(null, ns);
         });
     }
@@ -18724,11 +18732,12 @@ var Constants = (function () {
     function Constants() {
     }
     Constants.host = 'localhost';
-    Constants.port = 3000;
+    Constants.port = 1234;
     Constants.connectionString = "ws://" + Constants.host + ":" + Constants.port;
     Constants.requestSize = 200000;
     // public static readonly filePath = '/home/masterwok/Downloads/small.mp4';
     Constants.filePath = '/Users/jonathantrowbridge/Downloads/small.mp4';
+    Constants.fileSize = 383361;
     return Constants;
 }());
 exports.Constants = Constants;
@@ -18816,6 +18825,8 @@ function WebSocketStream(target, protocols, options) {
     // https://github.com/maxogden/websocket-stream/issues/82
     if (isNative && isBrowser) {
       socket = new WS(target, protocols)
+        console.log('hit');
+        console.log(protocols);
     } else {
       socket = new WS(target, protocols, options)
     }
