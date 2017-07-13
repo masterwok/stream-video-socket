@@ -11,7 +11,9 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {},
+  "dependencies": {
+    "range-stream": "^1.1.0"
+  },
   "devDependencies": {
     "@types/node": "^8.0.2",
     "@types/websocket": "0.0.34",
