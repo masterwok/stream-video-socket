@@ -3,7 +3,7 @@ import {Constants} from './Constants';
 import {HexHelper} from './Helpers/HexHelper';
 
 export class RewindReadStream extends Transform {
-    private chunkBuf: Array<Array<any>>;
+    private chunkBuf: Array<ArrayBuffer>;
     private hitLimit: boolean;
     private chunkSize: number;
     private maxSize: number;
@@ -24,7 +24,7 @@ export class RewindReadStream extends Transform {
         this.chunkBuf.push(buf);
 
         this.push(buf);
-        // this.reduceChunkBuffer();
+        this.reduceChunkBuffer();
 
         cb();
     }
@@ -54,10 +54,11 @@ export class RewindReadStream extends Transform {
         let stream = new PassThrough();
 
         const chunkIndex = Math.floor(index / this.chunkSize);
+
         let splitChunk = this.chunkBuf[chunkIndex]
             .slice(index, this.chunkSize - 1);
 
-        console.log(`position: ${index}, index: ${chunkIndex}, size: ${splitChunk.length}`);
+        console.log(`position: ${index}, index: ${chunkIndex}, size: ${splitChunk.byteLength}`);
 
         stream.write(splitChunk);
 

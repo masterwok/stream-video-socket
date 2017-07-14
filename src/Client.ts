@@ -9,7 +9,7 @@ import {HexHelper} from './Helpers/HexHelper';
 const stream = websocketStream(Constants.connectionString)
     .pipe(new RewindReadStream(
         Constants.requestSize,
-        Constants.requestSize * 4
+        Constants.requestSize * 2
     ));
 
 const file = {
@@ -33,21 +33,13 @@ const file = {
             }
 
             if (reqStart >= reqEnd) {
-                console.log('ending stream');
                 return cb(null, null);
             }
 
             console.log(`reqStart: ${reqStart}, reqEnd: ${reqEnd}, previousReqEnd: ${previousReqEnd}`);
 
             if (reqStart != 0 && reqStart < previousReqEnd) {
-                const tmp = stream.rewind(reqStart).pipe(rs);
-
-                tmp.on('data', data => {
-                    console.log(HexHelper(data));
-                });
-
-                return cb(null, tmp);
-                // return cb(null, stream.rewind(reqStart).pipe(rs));
+                return cb(null, stream.rewind(reqStart).pipe(rs));
             }
 
             start = reqEnd;
