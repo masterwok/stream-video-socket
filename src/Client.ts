@@ -1,11 +1,16 @@
 import {Constants} from './Constants';
 import * as websocketStream from 'websocket-stream';
-import {Duplex} from 'stream';
 import * as render from 'render-media';
 import * as rangeStream from 'range-stream';
 import * as MultiStream from 'multistream';
+import {RewindReadStream} from './RewindReadStream';
+import {HexHelper} from './Helpers/HexHelper';
 
-const stream: Duplex = websocketStream(Constants.connectionString);
+const stream = websocketStream(Constants.connectionString)
+    .pipe(new RewindReadStream(
+        Constants.requestSize,
+        Constants.requestSize * 4
+    ));
 
 const file = {
     name: Constants.filePath,
@@ -13,12 +18,12 @@ const file = {
         opts = opts || {};
 
         let start = opts.start || 0;
-        let previousReqEnd = 0;
+        let previousReqEnd = Constants.requestSize;
 
         return new MultiStream(cb => {
 
             const reqStart = start;
-
+            const rs = rangeStream(0, Constants.requestSize);
 
             let end = opts.end ? (opts.end + 1) : Constants.fileSize;
             let reqEnd = start + Constants.requestSize;
@@ -34,17 +39,21 @@ const file = {
 
             console.log(`reqStart: ${reqStart}, reqEnd: ${reqEnd}, previousReqEnd: ${previousReqEnd}`);
 
-            if (reqStart < previousReqEnd) {
-                console.log(`Stream needs to rewind to ${reqStart}`)
-            }
+            if (reqStart != 0 && reqStart < previousReqEnd) {
+                const tmp = stream.rewind(reqStart).pipe(rs);
 
-            const rs = rangeStream(reqStart, reqEnd - 1);
-            const ns = stream.pipe(rs);
+                tmp.on('data', data => {
+                    console.log(HexHelper(data));
+                });
+
+                return cb(null, tmp);
+                // return cb(null, stream.rewind(reqStart).pipe(rs));
+            }
 
             start = reqEnd;
             previousReqEnd = reqEnd;
 
-            cb(null, ns);
+            cb(null, stream.pipe(rs));
         });
     }
 };
