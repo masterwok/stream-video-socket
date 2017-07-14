@@ -18825,8 +18825,6 @@ function WebSocketStream(target, protocols, options) {
     // https://github.com/maxogden/websocket-stream/issues/82
     if (isNative && isBrowser) {
       socket = new WS(target, protocols)
-        console.log('hit');
-        console.log(protocols);
     } else {
       socket = new WS(target, protocols, options)
     }
@@ -21895,13 +21893,10 @@ MP4Remuxer.prototype._findMoov = function (offset) {
 	var fileStream = self._file.createReadStream({
 		start: offset
 	})
-
 	fileStream.pipe(self._decoder)
 
 	self._decoder.once('box', function (headers) {
-
-		console.log(headers);
-
+	    console.log(headers);
 		if (headers.type === 'moov') {
 			self._decoder.decode(function (moov) {
 				fileStream.destroy()
