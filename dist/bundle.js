@@ -3062,7 +3062,7 @@ util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
 var Readable = __webpack_require__(52);
-var Writable = __webpack_require__(22);
+var Writable = __webpack_require__(21);
 
 util.inherits(Duplex, Readable);
 
@@ -3191,8 +3191,8 @@ var util = __webpack_require__(1);
 util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
-var Readable = __webpack_require__(23);
-var Writable = __webpack_require__(26);
+var Readable = __webpack_require__(22);
+var Writable = __webpack_require__(25);
 
 util.inherits(Duplex, Readable);
 
@@ -3321,8 +3321,8 @@ var util = __webpack_require__(1);
 util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
-var Readable = __webpack_require__(28);
-var Writable = __webpack_require__(31);
+var Readable = __webpack_require__(27);
+var Writable = __webpack_require__(30);
 
 util.inherits(Duplex, Readable);
 
@@ -3451,8 +3451,8 @@ var util = __webpack_require__(1);
 util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
-var Readable = __webpack_require__(35);
-var Writable = __webpack_require__(38);
+var Readable = __webpack_require__(34);
+var Writable = __webpack_require__(37);
 
 util.inherits(Duplex, Readable);
 
@@ -3581,8 +3581,8 @@ var util = __webpack_require__(1);
 util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
-var Readable = __webpack_require__(41);
-var Writable = __webpack_require__(44);
+var Readable = __webpack_require__(40);
+var Writable = __webpack_require__(43);
 
 util.inherits(Duplex, Readable);
 
@@ -3711,8 +3711,8 @@ var util = __webpack_require__(1);
 util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
-var Readable = __webpack_require__(46);
-var Writable = __webpack_require__(49);
+var Readable = __webpack_require__(45);
+var Writable = __webpack_require__(48);
 
 util.inherits(Duplex, Readable);
 
@@ -4153,7 +4153,7 @@ Box.encodingLength = function (obj) {
 /* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wrappy = __webpack_require__(33)
+var wrappy = __webpack_require__(32)
 module.exports = wrappy(once)
 module.exports.strict = wrappy(onceStrict)
 
@@ -4201,150 +4201,17 @@ function onceStrict (fn) {
 /* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-module.exports = Stream;
-
-var EE = __webpack_require__(6).EventEmitter;
-var inherits = __webpack_require__(0);
-
-inherits(Stream, EE);
-Stream.Readable = __webpack_require__(21);
-Stream.Writable = __webpack_require__(131);
-Stream.Duplex = __webpack_require__(132);
-Stream.Transform = __webpack_require__(133);
-Stream.PassThrough = __webpack_require__(134);
-
-// Backwards-compat with node 0.4.x
-Stream.Stream = Stream;
-
-
-
-// old-style streams.  Note that the pipe method (the only relevant
-// part of this class) is overridden in the Readable class.
-
-function Stream() {
-  EE.call(this);
-}
-
-Stream.prototype.pipe = function(dest, options) {
-  var source = this;
-
-  function ondata(chunk) {
-    if (dest.writable) {
-      if (false === dest.write(chunk) && source.pause) {
-        source.pause();
-      }
-    }
-  }
-
-  source.on('data', ondata);
-
-  function ondrain() {
-    if (source.readable && source.resume) {
-      source.resume();
-    }
-  }
-
-  dest.on('drain', ondrain);
-
-  // If the 'end' option is not supplied, dest.end() will be called when
-  // source gets the 'end' or 'close' events.  Only dest.end() once.
-  if (!dest._isStdio && (!options || options.end !== false)) {
-    source.on('end', onend);
-    source.on('close', onclose);
-  }
-
-  var didOnEnd = false;
-  function onend() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    dest.end();
-  }
-
-
-  function onclose() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    if (typeof dest.destroy === 'function') dest.destroy();
-  }
-
-  // don't leave dangling pipes when there are errors.
-  function onerror(er) {
-    cleanup();
-    if (EE.listenerCount(this, 'error') === 0) {
-      throw er; // Unhandled stream error in pipe.
-    }
-  }
-
-  source.on('error', onerror);
-  dest.on('error', onerror);
-
-  // remove all the event listeners that were added.
-  function cleanup() {
-    source.removeListener('data', ondata);
-    dest.removeListener('drain', ondrain);
-
-    source.removeListener('end', onend);
-    source.removeListener('close', onclose);
-
-    source.removeListener('error', onerror);
-    dest.removeListener('error', onerror);
-
-    source.removeListener('end', cleanup);
-    source.removeListener('close', cleanup);
-
-    dest.removeListener('close', cleanup);
-  }
-
-  source.on('end', cleanup);
-  source.on('close', cleanup);
-
-  dest.on('close', cleanup);
-
-  dest.emit('pipe', source);
-
-  // Allow for unix-like usage: A.pipe(B).pipe(C)
-  return dest;
-};
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
 exports = module.exports = __webpack_require__(52);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(22);
+exports.Writable = __webpack_require__(21);
 exports.Duplex = __webpack_require__(11);
 exports.Transform = __webpack_require__(55);
 exports.PassThrough = __webpack_require__(130);
 
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5015,7 +4882,7 @@ Writable.prototype._destroy = function (err, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(9).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5068,7 +4935,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(24);
+var Stream = __webpack_require__(23);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -5100,7 +4967,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(70);
-var destroyImpl = __webpack_require__(25);
+var destroyImpl = __webpack_require__(24);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -6029,14 +5896,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).EventEmitter;
 
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6114,7 +5981,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6195,7 +6062,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(24);
+var Stream = __webpack_require__(23);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -6209,7 +6076,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(25);
+var destroyImpl = __webpack_require__(24);
 
 util.inherits(Writable, Stream);
 
@@ -6785,7 +6652,7 @@ Writable.prototype._destroy = function (err, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(9).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7005,7 +6872,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7058,7 +6925,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(29);
+var Stream = __webpack_require__(28);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -7090,7 +6957,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(77);
-var destroyImpl = __webpack_require__(30);
+var destroyImpl = __webpack_require__(29);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -8019,14 +7886,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).EventEmitter;
 
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8104,7 +7971,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8185,7 +8052,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(29);
+var Stream = __webpack_require__(28);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -8199,7 +8066,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(30);
+var destroyImpl = __webpack_require__(29);
 
 util.inherits(Writable, Stream);
 
@@ -8775,7 +8642,7 @@ Writable.prototype._destroy = function (err, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(9).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8995,7 +8862,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports) {
 
 // Returns a wrapper function that returns a wrapped callback
@@ -9034,7 +8901,7 @@ function wrappy (fn, cb) {
 
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = MediaElementWrapper
@@ -9285,7 +9152,7 @@ MediaSourceStream.prototype._getBufferDuration = function () {
 
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9338,7 +9205,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(36);
+var Stream = __webpack_require__(35);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -9370,7 +9237,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(92);
-var destroyImpl = __webpack_require__(37);
+var destroyImpl = __webpack_require__(36);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -10299,14 +10166,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).EventEmitter;
 
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10384,7 +10251,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10465,7 +10332,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(36);
+var Stream = __webpack_require__(35);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -10479,7 +10346,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(37);
+var destroyImpl = __webpack_require__(36);
 
 util.inherits(Writable, Stream);
 
@@ -11055,7 +10922,7 @@ Writable.prototype._destroy = function (err, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(9).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11275,20 +11142,20 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 40 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(41);
+exports = module.exports = __webpack_require__(40);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(44);
+exports.Writable = __webpack_require__(43);
 exports.Duplex = __webpack_require__(15);
-exports.Transform = __webpack_require__(45);
+exports.Transform = __webpack_require__(44);
 exports.PassThrough = __webpack_require__(109);
 
 
 /***/ }),
-/* 41 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11341,7 +11208,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(42);
+var Stream = __webpack_require__(41);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -11373,7 +11240,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(108);
-var destroyImpl = __webpack_require__(43);
+var destroyImpl = __webpack_require__(42);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -12302,14 +12169,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 42 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).EventEmitter;
 
 
 /***/ }),
-/* 43 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12387,7 +12254,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 44 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12468,7 +12335,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(42);
+var Stream = __webpack_require__(41);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -12482,7 +12349,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(43);
+var destroyImpl = __webpack_require__(42);
 
 util.inherits(Writable, Stream);
 
@@ -13058,7 +12925,7 @@ Writable.prototype._destroy = function (err, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(9).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 45 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13278,7 +13145,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 46 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13331,7 +13198,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(47);
+var Stream = __webpack_require__(46);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -13363,7 +13230,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(119);
-var destroyImpl = __webpack_require__(48);
+var destroyImpl = __webpack_require__(47);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -14292,14 +14159,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 47 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).EventEmitter;
 
 
 /***/ }),
-/* 48 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14377,7 +14244,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 49 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14458,7 +14325,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(47);
+var Stream = __webpack_require__(46);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -14472,7 +14339,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(48);
+var destroyImpl = __webpack_require__(47);
 
 util.inherits(Writable, Stream);
 
@@ -15048,7 +14915,7 @@ Writable.prototype._destroy = function (err, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(9).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 50 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15268,7 +15135,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 51 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -15362,6 +15229,139 @@ function forEach (xs, f) {
 }
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+module.exports = Stream;
+
+var EE = __webpack_require__(6).EventEmitter;
+var inherits = __webpack_require__(0);
+
+inherits(Stream, EE);
+Stream.Readable = __webpack_require__(20);
+Stream.Writable = __webpack_require__(131);
+Stream.Duplex = __webpack_require__(132);
+Stream.Transform = __webpack_require__(133);
+Stream.PassThrough = __webpack_require__(134);
+
+// Backwards-compat with node 0.4.x
+Stream.Stream = Stream;
+
+
+
+// old-style streams.  Note that the pipe method (the only relevant
+// part of this class) is overridden in the Readable class.
+
+function Stream() {
+  EE.call(this);
+}
+
+Stream.prototype.pipe = function(dest, options) {
+  var source = this;
+
+  function ondata(chunk) {
+    if (dest.writable) {
+      if (false === dest.write(chunk) && source.pause) {
+        source.pause();
+      }
+    }
+  }
+
+  source.on('data', ondata);
+
+  function ondrain() {
+    if (source.readable && source.resume) {
+      source.resume();
+    }
+  }
+
+  dest.on('drain', ondrain);
+
+  // If the 'end' option is not supplied, dest.end() will be called when
+  // source gets the 'end' or 'close' events.  Only dest.end() once.
+  if (!dest._isStdio && (!options || options.end !== false)) {
+    source.on('end', onend);
+    source.on('close', onclose);
+  }
+
+  var didOnEnd = false;
+  function onend() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    dest.end();
+  }
+
+
+  function onclose() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    if (typeof dest.destroy === 'function') dest.destroy();
+  }
+
+  // don't leave dangling pipes when there are errors.
+  function onerror(er) {
+    cleanup();
+    if (EE.listenerCount(this, 'error') === 0) {
+      throw er; // Unhandled stream error in pipe.
+    }
+  }
+
+  source.on('error', onerror);
+  dest.on('error', onerror);
+
+  // remove all the event listeners that were added.
+  function cleanup() {
+    source.removeListener('data', ondata);
+    dest.removeListener('drain', ondrain);
+
+    source.removeListener('end', onend);
+    source.removeListener('close', onclose);
+
+    source.removeListener('error', onerror);
+    dest.removeListener('error', onerror);
+
+    source.removeListener('end', cleanup);
+    source.removeListener('close', cleanup);
+
+    dest.removeListener('close', cleanup);
+  }
+
+  source.on('end', cleanup);
+  source.on('close', cleanup);
+
+  dest.on('close', cleanup);
+
+  dest.emit('pipe', source);
+
+  // Allow for unix-like usage: A.pipe(B).pipe(C)
+  return dest;
+};
+
 
 /***/ }),
 /* 52 */
@@ -18684,19 +18684,15 @@ var websocketStream = __webpack_require__(63);
 var render = __webpack_require__(83);
 var rangeStream = __webpack_require__(121);
 var MultiStream = __webpack_require__(140);
-var RewindReadStream_1 = __webpack_require__(146);
-var stream = websocketStream(Constants_1.Constants.connectionString)
-    .pipe(new RewindReadStream_1.RewindReadStream(Constants_1.Constants.requestSize, Constants_1.Constants.requestSize * 2));
 var file = {
     name: Constants_1.Constants.filePath,
     createReadStream: function (opts) {
-        opts = opts || {};
+        opts = opts || { start: 0, end: 0 };
         var start = opts.start || 0;
-        var previousReqEnd = Constants_1.Constants.requestSize;
         return new MultiStream(function (cb) {
+            var stream = websocketStream(Constants_1.Constants.connectionString);
             var reqStart = start;
-            var rs = rangeStream(0, Constants_1.Constants.requestSize);
-            var end = opts.end ? (opts.end + 1) : Constants_1.Constants.fileSize;
+            var end = opts.end ? (opts.end + 1) : -1;
             var reqEnd = start + Constants_1.Constants.requestSize;
             if (end >= 0 && reqEnd > end) {
                 reqEnd = end;
@@ -18704,13 +18700,9 @@ var file = {
             if (reqStart >= reqEnd) {
                 return cb(null, null);
             }
-            console.log("reqStart: " + reqStart + ", reqEnd: " + reqEnd + ", previousReqEnd: " + previousReqEnd);
-            if (reqStart != 0 && reqStart < previousReqEnd) {
-                return cb(null, stream.rewind(reqStart).pipe(rs));
-            }
+            var ns = stream.pipe(rangeStream(reqStart, reqEnd - 1));
             start = reqEnd;
-            previousReqEnd = reqEnd;
-            cb(null, stream.pipe(rs));
+            cb(null, ns);
         });
     }
 };
@@ -18732,11 +18724,11 @@ var Constants = (function () {
     function Constants() {
     }
     Constants.host = 'localhost';
-    Constants.port = 1234;
+    Constants.port = 1236;
     Constants.connectionString = "ws://" + Constants.host + ":" + Constants.port;
-    Constants.requestSize = 2000000;
-    // public static readonly filePath = '/home/masterwok/Downloads/small.mp4';
-    Constants.filePath = '/Users/jonathantrowbridge/Downloads/small.mp4';
+    Constants.requestSize = 5000000;
+    Constants.filePath = '/home/masterwok/Downloads/small.mp4';
+    // public static readonly filePath = '/Users/jonathantrowbridge/Downloads/small.mp4';
     Constants.fileSize = -1;
     return Constants;
 }());
@@ -18937,12 +18929,12 @@ function WebSocketStream(target, protocols, options) {
 /* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(23);
+exports = module.exports = __webpack_require__(22);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(26);
+exports.Writable = __webpack_require__(25);
 exports.Duplex = __webpack_require__(12);
-exports.Transform = __webpack_require__(27);
+exports.Transform = __webpack_require__(26);
 exports.PassThrough = __webpack_require__(72);
 
 
@@ -19492,7 +19484,7 @@ module.exports = function () {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(27);
+var Transform = __webpack_require__(26);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -19750,12 +19742,12 @@ module.exports = Duplexify
 /* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(28);
+exports = module.exports = __webpack_require__(27);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(31);
+exports.Writable = __webpack_require__(30);
 exports.Duplex = __webpack_require__(13);
-exports.Transform = __webpack_require__(32);
+exports.Transform = __webpack_require__(31);
 exports.PassThrough = __webpack_require__(78);
 
 
@@ -19890,7 +19882,7 @@ module.exports = function () {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(32);
+var Transform = __webpack_require__(31);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -19990,7 +19982,7 @@ module.exports = eos;
 /* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wrappy = __webpack_require__(33)
+var wrappy = __webpack_require__(32)
 module.exports = wrappy(once)
 
 once.proto = once(function () {
@@ -20067,7 +20059,7 @@ exports.mime = __webpack_require__(84)
 
 var debug = __webpack_require__(85)('render-media')
 var isAscii = __webpack_require__(88)
-var MediaElementWrapper = __webpack_require__(34)
+var MediaElementWrapper = __webpack_require__(33)
 var path = __webpack_require__(95)
 var streamToBlobURL = __webpack_require__(96)
 var videostream = __webpack_require__(98)
@@ -21080,12 +21072,12 @@ module.exports = function isAscii(str) {
 /* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(35);
+exports = module.exports = __webpack_require__(34);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(38);
+exports.Writable = __webpack_require__(37);
 exports.Duplex = __webpack_require__(14);
-exports.Transform = __webpack_require__(39);
+exports.Transform = __webpack_require__(38);
 exports.PassThrough = __webpack_require__(93);
 
 
@@ -21220,7 +21212,7 @@ module.exports = function () {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(39);
+var Transform = __webpack_require__(38);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -21551,7 +21543,7 @@ module.exports = function getBlob (stream, mimeType, cb) {
 /* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var MediaElementWrapper = __webpack_require__(34)
+var MediaElementWrapper = __webpack_require__(33)
 var pump = __webpack_require__(99)
 
 var MP4Remuxer = __webpack_require__(102)
@@ -22397,7 +22389,7 @@ exports.encode = __webpack_require__(114)
 /* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var stream = __webpack_require__(40)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var stream = __webpack_require__(39)
 var inherits = __webpack_require__(0)
 var nextEvent = __webpack_require__(110)
 var Box = __webpack_require__(18)
@@ -22716,7 +22708,7 @@ module.exports = function () {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(45);
+var Transform = __webpack_require__(44);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -23814,7 +23806,7 @@ exports.DecoderConfigDescriptor.decode = function (buf, start, end) {
 /* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer, process) {var stream = __webpack_require__(40)
+/* WEBPACK VAR INJECTION */(function(Buffer, process) {var stream = __webpack_require__(39)
 var inherits = __webpack_require__(0)
 var Box = __webpack_require__(18)
 
@@ -24082,12 +24074,12 @@ RangeSliceStream.prototype.destroy = function (err) {
 /* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(46);
+exports = module.exports = __webpack_require__(45);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(49);
+exports.Writable = __webpack_require__(48);
 exports.Duplex = __webpack_require__(16);
-exports.Transform = __webpack_require__(50);
+exports.Transform = __webpack_require__(49);
 exports.PassThrough = __webpack_require__(120);
 
 
@@ -24222,7 +24214,7 @@ module.exports = function () {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(50);
+var Transform = __webpack_require__(49);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -24452,7 +24444,7 @@ module.exports = __webpack_require__(124)
 
 module.exports = Transform;
 
-var Duplex = __webpack_require__(51);
+var Duplex = __webpack_require__(50);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -24644,7 +24636,7 @@ if (!EE.listenerCount) EE.listenerCount = function(emitter, type) {
 };
 /*</replacement>*/
 
-var Stream = __webpack_require__(20);
+var Stream = __webpack_require__(51);
 
 /*<replacement>*/
 var util = __webpack_require__(1);
@@ -25750,7 +25742,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 /* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(22);
+module.exports = __webpack_require__(21);
 
 
 /***/ }),
@@ -25764,14 +25756,14 @@ module.exports = __webpack_require__(11);
 /* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(21).Transform
+module.exports = __webpack_require__(20).Transform
 
 
 /***/ }),
 /* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(21).PassThrough
+module.exports = __webpack_require__(20).PassThrough
 
 
 /***/ }),
@@ -25817,7 +25809,7 @@ var util = __webpack_require__(1);
 util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
-var Stream = __webpack_require__(20);
+var Stream = __webpack_require__(51);
 
 util.inherits(Writable, Stream);
 
@@ -25899,7 +25891,7 @@ function WritableState(options, stream) {
 }
 
 function Writable(options) {
-  var Duplex = __webpack_require__(51);
+  var Duplex = __webpack_require__(50);
 
   // Writable ctor is applied to Duplexes, though they're not
   // instanceof Writable, they're instanceof Readable.
@@ -27136,74 +27128,6 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-
-/***/ }),
-/* 146 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-var stream_1 = __webpack_require__(20);
-var RewindReadStream = (function (_super) {
-    __extends(RewindReadStream, _super);
-    function RewindReadStream(chunkSize, maxSize) {
-        var _this = _super.call(this) || this;
-        _this.chunkSize = chunkSize;
-        _this.maxSize = maxSize;
-        _this.chunkBuf = [];
-        _this.offset = 0;
-        return _this;
-    }
-    RewindReadStream.prototype._transform = function (buf, enc, cb) {
-        this.offset += buf ? buf.length : 0;
-        this.chunkBuf.push(buf);
-        this.push(buf);
-        this.reduceChunkBuffer();
-        cb();
-    };
-    // TODO: Fix once rewind works.
-    RewindReadStream.prototype.reduceChunkBuffer = function () {
-        if (this.hitLimit) {
-            this.chunkBuf.shift();
-            return;
-        }
-        this.hitLimit = this.chunkBuf.length
-            * this.chunkSize
-            > this.maxSize - 1;
-        // Below limit
-        if (!this.hitLimit) {
-            return;
-        }
-        // Remove oldest chunk
-        this.chunkBuf.shift();
-    };
-    RewindReadStream.prototype.rewind = function (index) {
-        var stream = new stream_1.PassThrough();
-        var chunkIndex = Math.floor(index / this.chunkSize);
-        var splitChunk = this.chunkBuf[chunkIndex]
-            .slice(index, this.chunkSize - 1);
-        console.log("position: " + index + ", index: " + chunkIndex + ", size: " + splitChunk.byteLength);
-        stream.write(splitChunk);
-        for (var i = chunkIndex; i < this.chunkBuf.length; i++) {
-            stream.write(this.chunkBuf[i]);
-        }
-        return stream;
-    };
-    return RewindReadStream;
-}(stream_1.Transform));
-exports.RewindReadStream = RewindReadStream;
-
 
 /***/ })
 /******/ ]);
